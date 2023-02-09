@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#packages to import
 import pandas as pd
 import numpy as np
 import scipy
@@ -17,38 +16,43 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import tqdm
 from scipy.optimize import curve_fit
 import math
-#from shapely.geometry import Point
-#from shapely.geometry.polygon import Polygon
 pd.options.mode.chained_assignment = None
 new_rc_params = {'text.usetex': False,
 "svg.fonttype": 'none'
 }
 mpl.rcParams.update(new_rc_params)
-#plt.savefig('SineSignal.svg', format = 'svg',bbox_inches='tight')
 
-Neighbors_info='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/CorrectedMovie200923/200923/cellNeighbors.csv'
-#Neighbors_info='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/Dumpy_DSRF_1/200924_wing1/cellNeighbors.csv' #Dumpy
-data_base='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/CorrectedMovie200923/200923/DB.csv'
-#data_base='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/Dumpy_DSRF_1/200924_wing1/DBcells2.csv' #Dumpy
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##run this block if you want to simulate WT veins
+Neighbors_info='./wing_movies/200923/cellNeighbors.csv' #data_base containing neighbors relationships
+data_base='./wing_movies/200923/DB.csv' #data_base containing all the relevant quantities for each cell at each time frame
 DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
-
-movieDatabaseDir='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/CorrectedMovie200923/'
-#movieDatabaseDir='/Users/simonecicolini/Dropbox (Physbio)/wing_movies/Dumpy_DSRF_1/' #Dumpy
+movieDatabaseDir='./wing_movies/' 
 name='200923'
-#name='200924_wing1' #Dumpy
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##run this block if you want to simulate Dumpy mutant veins
+# Neighbors_info='./wing_movies/200924_wing1/cellNeighbors.csv' #data_base containing neighbors relationships
+# data_base='./wing_movies/200924_wing1/DBcells2.csv' #data_base containing all the relevant quantities for each cell at each time frame
+# DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
+# movieDatabaseDir='./wing_movies/' 
+# name='200924_wing1'
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+##import movie info using the tissue_miner class
 movieRoiPath= 'roi_bt/' 
 movieRoiFile= 'lgRoiSmoothed'            
 movie=tm.Movie(name, path= movieDatabaseDir, ROI_path= movieRoiPath, ROI_filename= movieRoiFile)
 movie.load_cellshapes()
 Neighbors=pd.read_csv(Neighbors_info)
 
-
-#initialization:
+#initialization
 DB['u']=0;DB['diffusion_term']=0;DB['kernel_term']=0;DB['signaling_force']=0;DB['mcherry']=0
 #The cell 10 000 is not an actual cell but the border of the tissue:
 DB=DB[DB.cell_id!=10000]
-#--------------------------------------------------------------------------------------------
-#This block calculate the distance from vein L3 (Run it if you want to simulate cross vein)
+
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##This block calculate the distance from vein L3 (Run it only if you want to simulate cross vein)
 # DB_cells2=DB
 # th=500 #threshold of DSRF concentration
 # # we use a time varying paralelogram to select cells around a vein
@@ -93,9 +97,14 @@ DB=DB[DB.cell_id!=10000]
 #     DB_cells2.loc[DB_cells2.frame==fr,'dist']=Distmin
 
 # DB=DB_cells2
-##--------------------------------------------------------------------------------------------------------
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #parameters (time scales are expressed in frames (1 frame=5 min=1/12 hours) and length scales in microns)
+#dx is the average distance between cells
 #kl is the ratio between the intercellular distance dx and the basal protrusions length l
+#rho is the strength of notch inhibition (called J^I in the paper)
+#here D_tau/dx^2 is the activation strength (called J^A in the paper)
+#sigma is a parameter asscociated to the strength of the Langevin noise
 #tauprime half-time mcherry reporter (Notch activity)
 kl=2; r=0.1; rho=0.4; tau=1.5; D=2.5/tau; alpha_I=0.075; u_I=0.52; tauprime=20*12; D_tau=D*tau; sigma=0.0026
 
@@ -103,28 +112,35 @@ dx=4 # average distance between cells np.sqrt(DB.area.mean()*2/(np.sqrt(3)));
 l0=kl*dx;
 dt=0.2 #time step
 StepsPerFrame=5
-Boundary='dudt=0_until21h'
-# m and M are respectively the first and the second peak in the histogram of DSRF level
+Boundary='Simulation'
+
+## m and M are respectively the first and the second peak in the histogram of DSRF level
+##++++++++++++++++++++++++++++++++++++++++++++++++
+##use these values for WT:
 m=401. #WT_200923 
 M=1007. #WT_200923
+##use these values are for Dumpy mutant:
 #m=448. #DUMPY
 #M=1128. #DUMPY
+##++++++++++++++++++++++++++++++++++++++++++++++++
 
-#inital condition
+
+#inital condition for the simulation
 DB.loc[DB.frame==0,'u']=(1-(DB[DB.frame==0].DSRF_Conc-m)/(M-m))
 ##initial condition for cross vein
 #DB.loc[(DB.frame==0)&(DB.dist>0)&(DB.dist<60)&(DB.center_x>80)&(DB.center_x<130),'u']=1 #large cross vein
 #DB.loc[(DB.frame==0)&(DB.dist>0)&(DB.dist<60)&(DB.center_x>90)&(DB.center_x<120),'u']=1 #small cross vein
 
-param='CHECK_4_TAU='+str(tau)+'_rho='+str(rho)+'Dtau='+str(D_tau)+'_'+'tau='+str(tau)+'kl=2_alpha_I=0.075_rho=0.4_u_I=0.52'
-
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##folder to store 
+param='tau='+str(tau)+'_r='+str(r)+'Dtau='+str(D_tau)+'_kl=2_alpha_I=0.075_rho='+str(rho)+'u_I=0.52'
 if Boundary not in os.listdir('./'):
     os.mkdir(Boundary)
 if param not in os.listdir('./'+Boundary):
     os.mkdir('./'+Boundary+'/'+param)
 
 ## Functions 
-#autonomous dynamics
+#autonomous dynamics part
 def f(x,r)  :
       return (r - x)*(-1 + x)*x
 
@@ -181,19 +197,21 @@ def plot_frame_cells(MOVIE, frame, location, coll_df, color_column, c_min= 0., c
         plt.savefig(location+str(frame)+'.tif',format='tif',dpi=120) 
         plt.close()
 
-#functions to fit the peaks in the histogram of DSRF concentration
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##functions to fit the peaks in the histogram of DSRF concentration
 def gauss(x, mu, sigma, A):
     return A*np.exp(-(x-mu)**2/2/sigma**2)
-
+##use this definition for WT:
 def bimodal(x, sigma1, A1, mu2, sigma2, A2): #WT
     return gauss(x,401,sigma1,A1)+gauss(x,mu2,sigma2,A2)
+##use this definition for Dumpy:
 # def bimodal(x, sigma1, A1, mu2, sigma2, A2): #DPY
 #     return gauss(x,448,sigma1,A1)+gauss(x,mu2,sigma2,A2)
-
-#initial guess for fitting M (second peak in DSRF histogram)
+##initial guess for fitting M (second peak in DSRF histogram)
 expected=(50,90,1000,350,50)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#finding cells in the border      
+#find cells in the border      
 FRAME=0
 frame_cellshapes=tml.subset_dataframe(movie.cellshapes, ['frame'], [FRAME])    
 DB_f1=DB.loc[DB.frame==FRAME] #subset of the database for this frame
@@ -209,12 +227,15 @@ Border_cells=DB_f1[DB_f1.Border!=0].cell_id.unique()
 Border_And_Neighbors=list(Neighbors_f[Neighbors_f.cell_id.isin(Border_cells)].neighbor_cell_id.unique())
 Border_And_Neighborsx2=list(Neighbors_f[Neighbors_f.cell_id.isin(Border_And_Neighbors)].neighbor_cell_id.unique())
 
+
 for FRAME in tqdm(range(233)):
-    #this part plots the simulated tissue for this frame:
+    #------------------------------------------------------------------------
+    #this part plot the simulated tissue for this frame:
     frame_cellshapes=tml.subset_dataframe(movie.cellshapes, ['frame'], [FRAME])    
     frame_polygons_0=frame_cellshapes.groupby('cell_id').apply(lambda x: list(zip(x['x_pos'].values, x['y_pos'].values))).reset_index().rename(columns= {0: 'plot_vertices'})
     frame_polygons=DB[DB.frame==FRAME][[u'frame', u'cell_id', u'center_x', u'center_y', u'DSRF',u'DSRF_Conc', u'u']].merge(frame_polygons_0, on= 'cell_id')
     plot_frame_cells(movie,FRAME,'./'+Boundary+'/'+param+'/frame_', frame_polygons, title= 'u', color_column= 'u', c_min= -0.1, c_max= 1.05, color_map=cm.plasma) #cm.gist_rainbow)
+    #------------------------------------------------------------------------
 
     DB_f=DB_f1 #subset of the database for this frame
     distances=get_distances(DB,FRAME)
@@ -228,7 +249,7 @@ for FRAME in tqdm(range(233)):
     else:
         for i in range(StepsPerFrame): 
                 length_u=len(DB_f_in['u'])
-                noise=np.random.normal(0,np.sqrt(sigma*dt),length_u)
+                noise=np.random.normal(0,np.sqrt(sigma*dt),length_u) #noise 
  
                 DB_f_in['diffusion_term']=DB_f_in.apply(lambda x: calculate_diffusion_term(x.cell_id,x.neighbors,DB_f),axis=1)
                 DB_f_in['kernel_term']=DB_f_in['cell_id'].apply(lambda x : calculate_kernel_term(x,DB_f))
@@ -254,7 +275,7 @@ for FRAME in tqdm(range(233)):
         list_difference = [item for item in list_this_time if item not in list_next_time]
         DB_f=DB_f[~DB_f.cell_id.isin(list_difference)]
         DB.loc[(DB.frame==FRAME+1)&(DB.cell_id.isin(list_cells_t)),['u','diffusion_term','kernel_term','signaling_force','mcherry']]=DB_f[~DB_f.cell_id.isin(disappearing_cells)][['u','diffusion_term','kernel_term','signaling_force','mcherry']].values
-    #this treats cells appearing by division
+    #this part treats cells appearing by division
     for CELL in disappearing_cells_division : 
             daughter1,daughter2=DB_f[DB_f.cell_id==CELL].left_daughter_cell_id.unique()[0],DB_f[DB_f.cell_id==CELL].right_daughter_cell_id.unique()[0]
             DB.loc[(DB.frame==FRAME+1)&(DB.cell_id==daughter1),['u','diffusion_term','kernel_term','signaling_force','mcherry']]=DB_f[DB_f.cell_id==CELL][['u','diffusion_term','kernel_term','signaling_force','mcherry']].values[0]
