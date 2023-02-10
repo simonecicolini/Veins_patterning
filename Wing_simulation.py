@@ -23,7 +23,7 @@ new_rc_params = {'text.usetex': False,
 mpl.rcParams.update(new_rc_params)
 
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-##run this block if you want to simulate WT veins
+##run this block to simulate WT veins
 Neighbors_info='./wing_movies/200923/cellNeighbors.csv' #data_base containing neighbors relationships
 data_base='./wing_movies/200923/DB.csv' #data_base containing all the relevant quantities for each cell at each time frame
 DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
@@ -31,7 +31,7 @@ movieDatabaseDir='./wing_movies/'
 name='200923'
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-##run this block if you want to simulate Dumpy mutant veins
+##run this block to simulate Dumpy mutant veins
 # Neighbors_info='./wing_movies/200924_wing1/cellNeighbors.csv' #data_base containing neighbors relationships
 # data_base='./wing_movies/200924_wing1/DBcells2.csv' #data_base containing all the relevant quantities for each cell at each time frame
 # DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
@@ -52,7 +52,7 @@ DB['u']=0;DB['diffusion_term']=0;DB['kernel_term']=0;DB['signaling_force']=0;DB[
 DB=DB[DB.cell_id!=10000]
 
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-##This block calculate the distance from vein L3 (Run it only if you want to simulate cross vein)
+##This block calculate the distance from vein L3 (Run it only to simulate the cross vein)
 # DB_cells2=DB
 # th=500 #threshold of DSRF concentration
 # # we use a time varying paralelogram to select cells around a vein
@@ -106,6 +106,7 @@ DB=DB[DB.cell_id!=10000]
 #here D_tau/dx^2 is the activation strength (called J^A in the paper)
 #sigma is a parameter asscociated to the strength of the Langevin noise
 #tauprime half-time mcherry reporter (Notch activity)
+#u_I and alpha_I are associated to the threshold for Delta-Notch cis-inhibition
 kl=2; r=0.1; rho=0.4; tau=1.5; D=2.5/tau; alpha_I=0.075; u_I=0.52; tauprime=20*12; D_tau=D*tau; sigma=0.0026
 
 dx=4 # average distance between cells np.sqrt(DB.area.mean()*2/(np.sqrt(3)));
