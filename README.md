@@ -1,2 +1,5 @@
 # Veins_patterning
-Simulations of the signalling network involved in veins refinement.
+This repository contains python scripts to simulate the signalling network involved in veins refinement and described in the paper "Signalling-dependent refinement of a rough prepattern allows reproducible binary cell fate choice in a dynamic tissue".
+
+
+
