@@ -1,7 +1,8 @@
+#packages to import
 import os
 import time
 import matplotlib as mpl
-mpl.use('agg')
+#mpl.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
@@ -11,7 +12,8 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 import math
-#------------------------------------------------------
+#this class define properties of the hexgonal cells, such as size, u, and position in the lattice.
+#----------------------------------------------------------
 class hexagon:
     def __init__(self, center_m, center_n,size=1,
                  color=(1.0,1.0,1.0,1.0),u=0,
@@ -53,11 +55,16 @@ class hexagon:
 
     def get_color(self):
         return self.__color
-#----------------------------------------------------------
+#------------------------------------------------------------------
 #parameters (time scales are expressed in frames (1 frame=5 min=1/12 hours) and length scales in microns)
+#dx is the average distance between cells
+#kl is the ratio between the intercellular distance dx and the basal protrusions length l
+#rho is the strength of notch inhibition (called J^I in the paper)
+#here D_tau/dx^2 is the activation strength (called J^A in the paper)
+#sigma is a parameter asscociated to the strength of the Langevin noise
+#u_I and alpha_I are associated to the threshold for Delta-Notch cis-inhibition
 kl=2; tau=1.5; D=2.5/tau; u_I=0.52; alpha_I=0.075; r=0.1 ;rho=0.4
 D_tau=D*tau
-RF=2
 #define initial condition for the simulation
 condition='rough_stripe'
 
@@ -65,17 +72,20 @@ dx=4 #distance between cells (averaged in experimental movie)
 a=dx/np.sqrt(3) # hexagon size
 l0=kl*dx;
 M=55;N=55; #lattice size
-dt=1/10.*3*a**2/(5*D)
-T=2000
-Grid = [[hexagon(m,n) for n in range(-(m-1)//2,N-m//2)] for m in range(M)]
+dt=1/10.*3*a**2/(5*D) #time step
+T=10000 #total simulated time
+Grid = [[hexagon(m,n) for n in range(-(m-1)//2,N-m//2)] for m in range(M)] #build an hexagonal grid
 x_size=a*M*3./2
 y_size=a*N*np.sqrt(3)
-u=np.zeros((M,N))
-s=np.zeros((M,N))
+u=np.zeros((M,N)) #initialize u
+s=np.zeros((M,N)) #initialize Notch activity term
+#folder to store reults
 parameters = 'hexagons_'+condition+'_tau='+str(tau)+'_Dtau='+str(D_tau)+'_' + str(M)+'_'+str(N)+'/T=' + str(T)+'/l0=' + str(l0)+ '/u_I='+str(u_I) + '_/r=' +str(r) +'/rho=' + str(rho)+'tau=' + str(tau)  
 if not os.path.exists('./'+parameters):
     os.makedirs('./'+parameters)
-#compute distances for the Notch-inhibition term
+    
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
+#compute distances between hexagon centers for the Notch-inhibition term
 if 'distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy'  in os.listdir('./'):
     d=np.load('distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy')
 else :
@@ -99,11 +109,13 @@ else :
                         dy = dy + y_size
                     d[k,l,i,j]=np.sqrt(Dx**2+dy**2)
     np.save('distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy',d)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
 #autonomous dynamics    
 def f(x) :
     return (r - x)*(-1 + x)*x
-
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##different initial conditions
 if condition=='stripe' :
     for n in range(N):
         for m in range(2*M//5,3*M//5):
@@ -144,9 +156,9 @@ if condition=='rough_stripe' :
             u[m,n]=0
         for m in range(M//2-2+1,M//2+2+1):
             u[m,n]=1
-        for m in range(M//2-2-RF+1,M//2-2+1):
+        for m in range(M//2-2-2+1,M//2-2+1):
             u[m,n]=r1
-        for m in range(M//2+2+1,M//2+2+RF+1):
+        for m in range(M//2+2+1,M//2+2+2+1):
             u[m,n]=r2
                                  
 if condition=='rough_large_stripe':
@@ -161,7 +173,8 @@ if condition=='rough_large_stripe':
             u[m,n]=r1
         for m in range(37,42):
             u[m,n]=r2
-                
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #find neighboring cells 
 neighbors=np.zeros((M,N,6,2))
 for k in range(M) :
@@ -170,6 +183,7 @@ for k in range(M) :
             neighbors[k,l]=(np.array([k,l])+np.array([[0,1],[1,0],[-1,1],[0,-1],[-1,0],[1,1]]))%[M,N]
         else :
             neighbors[k,l]=(np.array([k,l])+np.array([[0,1],[1,0],[-1,-1],[0,-1],[-1,0],[1,-1]]))%[M,N]
+            
 #start the simulation           
 for i in tqdm(range(int(T/dt)-1)) :
     #plot hexagons colored according to the value of u in each hexagons
@@ -199,7 +213,7 @@ for i in tqdm(range(int(T/dt)-1)) :
         plt.savefig('./'+parameters + '/u_'+str(i)+'.png',format='png',bbox_inches='tight', pad_inches = 0,dpi=150)
         plt.close(fig)
         #--------------------------------------------------------------
-    #loop through each hexagonal cell    
+    #loop through each hexagonal cell and update cell state
     for l in range(N) :
         for k in range(M) :
             #calculate Notch inhibition term
