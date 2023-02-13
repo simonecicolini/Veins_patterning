@@ -7,4 +7,4 @@ The script ```Wing_simulation.py``` perform a simulation on the experimental win
 ***
 **Simulation on hexagonal cells**
 
-The script ```Hexagon_simulation.py``` perform a simulation of vein refinement on a hexagonal lattice. It does not require to import other files and can be readily run. 
+The script ```Hexagon_simulation.py``` perform a simulation of vein refinement on a hexagonal lattice. It does not require importing other files and can be readily run. 
