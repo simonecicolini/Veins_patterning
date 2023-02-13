@@ -192,11 +192,7 @@ for i in tqdm(range(int(T/dt)-1)) :
         minValue=-0.1;
         maxValue=1.1;
         cmap = mpl.cm.get_cmap('plasma')
-        fig,ax=plt.subplots()
-        ax1 = fig.add_axes([0.91, 0.1, 0.03, 0.8])
-        norm = mpl.colors.Normalize(vmin=np.min(u), vmax=np.max(u))
-        cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap,
-                                        norm=norm)
+
         polygons = [];
         for k in range(M):
             for l in range(N):
