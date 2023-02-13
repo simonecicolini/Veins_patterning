@@ -51,7 +51,7 @@ class Movie:
             self.frames= self.DB_table['cells']['frame'].unique()
             self.NFrames= len(self.frames)            
             self.time= self.DB_table['frames']['time_sec'].values/3600.
-            self.time= self.time[:self.NFrames]            
+            self.time= self.time[:self.NFrames]             
             self.dt= self.time[1:] - self.time[:-1]
         except:
             print('Table frames not available in ' + self.name + ' database.')
