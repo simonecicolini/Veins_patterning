@@ -25,7 +25,7 @@ mpl.rcParams.update(new_rc_params)
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ##run this block to simulate WT veins
 Neighbors_info='./wing_movies/200923/cellNeighbors.csv' #data_base containing neighbors relationships
-data_base='./wing_movies/200923/DB.csv' #data_base containing all the relevant quantities for each cell at each time frame
+data_base='./wing_movies/200923/DB.csv' #data_base containing all the relevant quantities for each cell at each time frame, like DSRF level, cell centroids, lineages,...
 DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
 movieDatabaseDir='./wing_movies/' 
 name='200923'
@@ -33,7 +33,7 @@ name='200923'
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ##run this block to simulate Dumpy mutant veins
 # Neighbors_info='./wing_movies/200924_wing1/cellNeighbors.csv' #data_base containing neighbors relationships
-# data_base='./wing_movies/200924_wing1/DBcells2.csv' #data_base containing all the relevant quantities for each cell at each time frame
+# data_base='./wing_movies/200924_wing1/DBcells2.csv' #data_base containing all the relevant quantities for each cell at each time frame, like DSRF level, cell centroids, lineages,...
 # DB=pd.read_csv(data_base);DB=DB.drop(['Unnamed: 0'],axis=1)
 # movieDatabaseDir='./wing_movies/' 
 # name='200924_wing1'
@@ -158,13 +158,14 @@ def calculate_diffusion_term(CELL,NEIGHBORS,DataB_f):
     diff=D*tau*diff/dx**2
     return diff
 
-#This function calculates the kernel term (Notch inhibition) for a given cell given its neighbors : 
+#This function calculates the kernel term (Notch inhibition) for a given cell given the state of all other cells: 
 def calculate_kernel_term(CELL,DataB_f):
-    ##get the row number of the dell in the database
+    ##get the row number of the cell in the database
     cell_row=DataB_f[DataB_f.cell_id==CELL].iloc[0]
     ## twisted way used to match with the distances array that has indices and not cell ids
     index_cell=DataB_f.index.get_loc(cell_row.name)
     s=np.sum(np.exp(-distances[index_cell,:]/l0)*DataB_f.u.values)/np.sum(np.exp(-distances[index_cell,:]/l0))
+    #function I(u) to account for the effect of cis-inhibition
     cis_inhib=(1-math.tanh((DataB_f[DataB_f.cell_id==CELL].u.values-u_I)/alpha_I))/2
     return -rho*cis_inhib*s
 
@@ -199,15 +200,15 @@ def plot_frame_cells(MOVIE, frame, location, coll_df, color_column, c_min= 0., c
         plt.close()
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-##functions to fit the peaks in the histogram of DSRF concentration
+##functions to fit the second peak (M) in the histogram of DSRF concentration
 def gauss(x, mu, sigma, A):
     return A*np.exp(-(x-mu)**2/2/sigma**2)
 ##use this definition for WT:
 def bimodal(x, sigma1, A1, mu2, sigma2, A2): #WT
-    return gauss(x,401,sigma1,A1)+gauss(x,mu2,sigma2,A2)
+    return gauss(x,401,sigma1,A1)+gauss(x,mu2,sigma2,A2) #the number 401 is the DSRF level of the first peak, obtained by fitting a sum of two gaussians to the DSRF histogram containing all the time frames.
 ##use this definition for Dumpy:
 # def bimodal(x, sigma1, A1, mu2, sigma2, A2): #DPY
-#     return gauss(x,448,sigma1,A1)+gauss(x,mu2,sigma2,A2)
+#     return gauss(x,448,sigma1,A1)+gauss(x,mu2,sigma2,A2) #the number 448 is the DSRF level of the first peak, obtained by fitting a sum of two gaussians to the DSRF histogram containing all the time frames.
 ##initial guess for fitting M (second peak in DSRF histogram)
 expected=(50,90,1000,350,50)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
