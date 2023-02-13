@@ -105,7 +105,7 @@ DB=DB[DB.cell_id!=10000]
 #rho is the strength of notch inhibition (called J^I in the paper)
 #here D_tau/dx^2 is the activation strength (called J^A in the paper)
 #sigma is a parameter asscociated to the strength of the Langevin noise
-#tauprime half-time mcherry reporter (Notch activity)
+#tauprime half-time mcherry reporter (Notch activity reporter)
 #u_I and alpha_I are associated to the threshold for Delta-Notch cis-inhibition
 kl=2; r=0.1; rho=0.4; tau=1.5; D=2.5/tau; alpha_I=0.075; u_I=0.52; tauprime=20*12; D_tau=D*tau; sigma=0.0026
 
