@@ -5,7 +5,7 @@ import scipy
 import tissue_miner_tools as tml
 import tissue_miner as tm
 import scipy.spatial.distance
-import matplotlib as mpl
+import matplotlib as mpl 
 # matplotlib.use('agg') #this command is necessary on the cluster
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
