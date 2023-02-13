@@ -4,7 +4,7 @@ import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
 import pandas.io.sql as psql
-import pandas.io.parsers as pp
+import pandas.io.parsers as pp 
 
 #from sets import Set 
 import os.path
