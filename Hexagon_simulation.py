@@ -3,7 +3,7 @@ import os
 import time
 import matplotlib as mpl
 #mpl.use('agg')
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 import matplotlib.patches as patches
 import matplotlib.animation as animation
 from matplotlib.collections import PatchCollection
