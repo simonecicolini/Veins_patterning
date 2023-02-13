@@ -12,7 +12,7 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 import math
-#this class define properties of the hexgonal cells, such as size, u, and position in the lattice.
+#this class define properties of the hexgonal cells, such as size, state (u), and position in the lattice.
 #----------------------------------------------------------
 class hexagon:
     def __init__(self, center_m, center_n,size=1,
@@ -65,7 +65,7 @@ class hexagon:
 #u_I and alpha_I are associated to the threshold for Delta-Notch cis-inhibition
 kl=2; tau=1.5; D=2.5/tau; u_I=0.52; alpha_I=0.075; r=0.1 ;rho=0.4
 D_tau=D*tau
-#define initial condition for the simulation
+#define initial condition for the simulation (choose among the different chioces listed below)
 condition='rough_stripe'
 
 dx=4 #distance between cells (averaged in experimental movie)
@@ -85,7 +85,7 @@ if not os.path.exists('./'+parameters):
     os.makedirs('./'+parameters)
     
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
-#compute distances between hexagon centers for the Notch-inhibition term
+#compute distances between hexagon centers in order to calculate the Notch-inhibition term
 if 'distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy'  in os.listdir('./'):
     d=np.load('distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy')
 else :
@@ -111,7 +111,7 @@ else :
     np.save('distances_a='+str(a)+'_'+str(M)+'_'+str(N)+'.npy',d)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
-#autonomous dynamics    
+#autonomous dynamics function
 def f(x) :
     return (r - x)*(-1 + x)*x
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
